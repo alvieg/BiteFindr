@@ -1,8 +1,10 @@
 <script>
 	import { goto } from '$app/navigation';
 	import SearchBar from '$lib/components/SearchBar.svelte';
+	import { onMount } from 'svelte';
 
 	let menuOpen = false;
+	let loggedInUser = null;
 
 	const categories = [
 		{ slug: 'breakfast', name: 'Breakfast' },
@@ -19,13 +21,38 @@
 		goto(`/category/${slug}`);
 		menuOpen = false;
 	}
+
+	function goLogin() {
+		goto('/login');
+		menuOpen = false;
+	}
+
+	function goSignup() {
+		goto('/signup');
+		menuOpen = false;
+	}
+
+	function goFavorites() {
+		goto('/favorites');
+		menuOpen = false;
+	}
+
+	function goLogout() {
+		goto('/logout');
+		menuOpen = false;
+	}
+
+	onMount(() => {
+		const user = localStorage.getItem('user');
+		if (user) loggedInUser = JSON.parse(user);
+	});
 </script>
 
 <nav class="navbar">
 	<div class="navbar-container">
-		<div class="logo" on:click={() => goto('/')}>BiteFinder</div>
+		<div class="logo" on:click={() => goto('/')}>BiteFindr</div>
 
-		<!-- Desktop Dropdown -->
+		<!-- Desktop -->
 		<div class="nav-links">
 			<div class="dropdown">
 				<button class="dropbtn">Categories ▾</button>
@@ -35,20 +62,35 @@
 					{/each}
 				</div>
 			</div>
+
+			{#if loggedInUser}
+				<a class="nav-link" on:click={goFavorites}>Favorites</a>
+				<a class="nav-link" on:click={goLogout}>Logout</a>
+			{:else}
+				<a class="nav-link" on:click={goLogin}>Login</a>
+				<a class="nav-link" on:click={goSignup}>Signup</a>
+			{/if}
 		</div>
 
 		<SearchBar />
 
-		<!-- Mobile Menu Toggle -->
+		<!-- Mobile toggle -->
 		<button class="menu-toggle" on:click={() => (menuOpen = !menuOpen)}> ☰ </button>
 	</div>
 
-	<!-- Mobile Dropdown -->
+	<!-- Mobile menu -->
 	{#if menuOpen}
 		<div class="mobile-menu">
 			{#each categories as cat}
 				<a on:click={() => goCategory(cat.slug)}>{cat.name}</a>
 			{/each}
+
+			{#if loggedInUser}
+				<a on:click={goFavorites}>Favorites</a>
+			{:else}
+				<a on:click={goLogin}>Login</a>
+				<a on:click={goSignup}>Signup</a>
+			{/if}
 		</div>
 	{/if}
 </nav>
@@ -84,9 +126,24 @@
 		text-decoration-thickness: 1.5px;
 	}
 
-	/* Dropdown (desktop) */
 	.nav-links {
-		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.nav-link {
+		cursor: pointer;
+		font-size: 1rem;
+		color: #333;
+		text-decoration: none;
+		padding: 6px 10px;
+		border-radius: 4px;
+		transition: background 0.2s;
+	}
+
+	.nav-link:hover {
+		background: #f0f0f0;
 	}
 
 	.dropdown {
@@ -129,7 +186,6 @@
 		display: block;
 	}
 
-	/* Mobile */
 	.menu-toggle {
 		display: none;
 		background: none;
@@ -143,19 +199,24 @@
 		flex-direction: column;
 		background: #fff;
 		border-top: 1px solid #ddd;
-		padding: 10px;
+		padding: 10px 0;
 	}
 
 	.mobile-menu a {
-		padding: 12px;
+		padding: 12px 16px;
 		border-bottom: 1px solid #eee;
 		text-decoration: none;
 		color: #333;
 		cursor: pointer;
+		font-size: 1rem;
 	}
 
 	.mobile-menu a:last-child {
 		border-bottom: none;
+	}
+
+	.mobile-menu a:hover {
+		background-color: #f0f0f0;
 	}
 
 	/* Responsive */

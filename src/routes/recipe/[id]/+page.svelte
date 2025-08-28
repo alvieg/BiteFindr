@@ -1,26 +1,35 @@
 <script>
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 
 	let recipe = {};
 	let loading = true;
 	let error = '';
+	let favMessage = '';
 
 	// get recipe id from route params
 	let recipeId;
-	$: recipeId = $page.params.id
+	$: recipeId = $page.params.id;
+
+	let loggedInUser = null;
+	let isFavorite = false;
+	let favoriteRowId = null; // the UUID of the favorite in DB
 
 	async function fetchRecipe() {
 		if (!recipeId) return;
 
 		loading = true;
 		error = '';
+		favMessage = '';
 
 		try {
 			const res = await fetch(`/api/recipe/${recipeId}`);
-			if (!res.ok) throw new Error(`Failed to fetch recipe`);
-			recipe = await res.json();
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || 'Failed to fetch recipe');
+			recipe = data;
+
+			// check if already favorited
+			if (loggedInUser) await checkFavorite();
 		} catch (e) {
 			error = e.message;
 			console.error(e);
@@ -29,7 +38,78 @@
 		}
 	}
 
-	onMount(fetchRecipe);
+	onMount(async () => {
+		const user = localStorage.getItem('user');
+		if (user) loggedInUser = JSON.parse(user);
+		await fetchRecipe();
+	});
+
+	async function checkFavorite() {
+		try {
+			const res = await fetch(`/api/favorites?user_id=${loggedInUser.id}`);
+			const favs = await res.json();
+			const existing = favs.find((f) => f.external_recipe_id == recipeId);
+			if (existing) {
+				isFavorite = true;
+				favoriteRowId = existing.id;
+			} else {
+				isFavorite = false;
+				favoriteRowId = null;
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	}
+
+	async function addToFavorites() {
+		if (!loggedInUser) {
+			favMessage = '❌ Please login to add favorites.';
+			return;
+		}
+
+		try {
+			const res = await fetch('/api/favorites', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					user_id: loggedInUser.id,
+					external_recipe_id: recipeId,
+					title: recipe.label
+				})
+			});
+			const data = await res.json();
+			if (data.success) {
+				favMessage = '✅ Added to favorites!';
+				isFavorite = true;
+				await checkFavorite();
+			} else {
+				favMessage = '❌ ' + data.error;
+			}
+		} catch (e) {
+			console.error(e);
+			favMessage = '❌ Failed to add favorite.';
+		}
+	}
+
+	async function removeFromFavorites() {
+		if (!favoriteRowId) return;
+
+		try {
+			await fetch('/api/favorites', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id: favoriteRowId })
+			});
+			favMessage = '✅ Removed from favorites!';
+			setTimeout(() => (favMessage = null), 2000);
+			isFavorite = false;
+			favoriteRowId = null;
+		} catch (e) {
+			console.error(e);
+			favMessage = '❌ Failed to remove favorite.';
+			setTimeout(() => (favMessage = null), 2000);
+		}
+	}
 </script>
 
 {#if loading}
@@ -62,6 +142,17 @@
 			{/if}
 		</div>
 
+		{#if loggedInUser}
+			{#if isFavorite}
+				<button class="fav-btn remove" on:click={removeFromFavorites}
+					>❌ Remove from Favorites</button
+				>
+			{:else}
+				<button class="fav-btn add" on:click={addToFavorites}>⭐ Add to Favorites</button>
+			{/if}
+			{#if favMessage}<p class="fav-msg">{favMessage}</p>{/if}
+		{/if}
+
 		<h2>Ingredients</h2>
 		<ul>
 			{#each recipe.ingredients as ing}
@@ -82,6 +173,19 @@
 {/if}
 
 <style>
+	button.fav-btn.add {
+		background: #ff9800;
+	}
+	button.fav-btn.add:hover {
+		background: #e68900;
+	}
+	button.fav-btn.remove {
+		background: #dc3545;
+	}
+	button.fav-btn.remove:hover {
+		background: #c82333;
+	}
+
 	.status {
 		text-align: center;
 		font-size: 1rem;
@@ -115,6 +219,28 @@
 		color: #555;
 	}
 
+	button.fav-btn {
+		background: #ff9800;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		padding: 0.7rem 1rem;
+		font-weight: bold;
+		cursor: pointer;
+		width: fit-content;
+		margin: 0.5rem 0;
+		transition: background 0.2s;
+	}
+
+	button.fav-btn:hover {
+		background: #e68900;
+	}
+
+	.fav-msg {
+		font-size: 0.9rem;
+		color: green;
+	}
+
 	h1 {
 		margin: 0;
 		font-size: 2rem;
@@ -142,7 +268,6 @@
 		text-decoration: underline;
 	}
 
-	/* Mobile responsiveness */
 	@media (max-width: 480px) {
 		.recipe-detail {
 			padding: 0.5rem;

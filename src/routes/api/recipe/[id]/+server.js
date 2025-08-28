@@ -14,6 +14,11 @@ export async function GET({ params }) {
 		const url = `https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`;
 
 		const response = await fetch(url);
+
+		if (response.status === 404) {
+			return json({ error: 'Recipe not found' }, { status: 404 });
+		}
+
 		if (!response.ok) {
 			throw new Error(`Spoonacular error: ${response.status}`);
 		}
@@ -45,6 +50,6 @@ export async function GET({ params }) {
 		return json(recipe);
 	} catch (err) {
 		console.error(err);
-		return json({ error: err.message }, { status: 500 });
+		return json({ error: 'Server error' }, { status: 500 });
 	}
 }
