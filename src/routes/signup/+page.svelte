@@ -32,7 +32,7 @@
 	<p>{message}</p>
 	<label>
 		Username:
-		<input placeholder="Username" bind:value={username} />
+		<input placeholder="Username" bind:value={username} type="text"/>
 	</label>
 	<label>
 		Email:
