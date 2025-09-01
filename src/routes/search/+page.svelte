@@ -1,6 +1,7 @@
 <script>
 	import { page } from '$app/stores';
 	import Recipe from '$lib/components/Recipe.svelte';
+	import SearchAd from '$lib/components/SearchAd.svelte';
 	import SearchBar from '$lib/components/SearchBar.svelte';
 
 	let error = '';
@@ -23,6 +24,8 @@
 
 			// ✅ Spoonacular shape
 			results = data.results || [];
+			results.splice(3, 0, 'ad')
+			results.splice(8, 0, 'ad')
 		} catch (e) {
 			error = e.message;
 			console.error(e);
@@ -65,8 +68,11 @@
 <!-- Results Grid -->
 <div class="grid">
 	{#each results as recipe}
-		<!-- Spoonacular has title + image -->
-		<Recipe data={recipe} />
+		{#if recipe === 'ad'}
+			<SearchAd />
+		{:else}
+			<Recipe data={recipe} />
+		{/if}
 	{/each}
 </div>
 

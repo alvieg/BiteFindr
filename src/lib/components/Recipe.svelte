@@ -47,6 +47,7 @@
 		border-radius: 8px;
 		padding: 16px;
 		width: 280px;
+		height: 330px;
 		background-color: #fff;
 		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 		display: flex;
