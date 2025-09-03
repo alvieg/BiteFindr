@@ -1,4 +1,6 @@
 <script>
+	import { goto } from "$app/navigation";
+
 	let username = '';
 	let email = '';
 	let password = '';
@@ -20,7 +22,8 @@
 			message = '✅ Signed up successfully!';
 
 			// Redirect to favorites
-			window.location.href = '/favorites';
+			goto('/favorites');
+			setTimeout(() => window.location.reload(), 1000)
 		} else {
 			message = '❌ ' + data.error;
 		}

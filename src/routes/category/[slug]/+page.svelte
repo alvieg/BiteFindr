@@ -1,5 +1,7 @@
 <script>
 	import { page } from '$app/stores';
+	import CategoryAd from '$lib/components/CategoryAd.svelte';
+	import Recipe from '$lib/components/Recipe.svelte';
 	import { onMount } from 'svelte';
 
 	let recipes = [];
@@ -16,6 +18,8 @@
 			if (!res.ok) throw new Error('Failed to load recipes');
 			const data = await res.json();
 			recipes = data.results;
+			recipes.splice(3, 0, 'ad');
+			recipes.splice(8, 0, 'ad');
 		} catch (err) {
 			error = err.message;
 		} finally {
@@ -41,11 +45,11 @@
 	{:else}
 		<div class="recipes-grid">
 			{#each recipes as recipe}
-				<div class="recipe-card" on:click={() => (window.location.href = `/recipe/${recipe.id}`)}>
-					<img src={recipe.image} alt={recipe.title} />
-					<h2>{recipe.title}</h2>
-					<p>{recipe.description}</p>
-				</div>
+				{#if recipe === 'ad'}
+					<CategoryAd />
+				{:else}
+					<Recipe data={recipe} />
+				{/if}
 			{/each}
 		</div>
 	{/if}

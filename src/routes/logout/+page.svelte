@@ -8,6 +8,7 @@
 
 		// Redirect to home page
 		goto('/');
+		setTimeout(() => window.location.reload(), 1000)
 	});
 </script>
 

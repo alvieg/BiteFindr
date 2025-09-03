@@ -1,5 +1,5 @@
 <script>
-	import { goto } from "$app/navigation";
+	import { goto } from '$app/navigation';
 
 	let email = '';
 	let password = '';
@@ -20,6 +20,7 @@
 			message = 'Logged in successfully!';
 			// Optionally redirect to favorites page
 			goto('/favorites');
+			setTimeout(() => window.location.reload(), 1000);
 		} else {
 			message = '❌ ' + data.error;
 		}
